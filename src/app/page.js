@@ -1,95 +1,89 @@
-import Image from 'next/image'
-import styles from './page.module.css'
+"use client";
+import { useReducer, useEffect } from "react";
+import axios from "axios";
+import CenterContext from "@/store/centersContext";
+import centersReducer from "@/store/centersReducer";
+import initialCentersState from "@/store/initialCentersState";
+import { setState } from "@/store/actions";
+import CenterList from "@/components/CenterList";
+import CenterDetail from "@/components/CenterDetail";
+import AppointmentDetail from "@/components/AppointmentDetail";
 
 export default function Home() {
+  const [centersState, dispatch] = useReducer(
+    centersReducer,
+    initialCentersState
+  );
+
+  const {
+    appointment_Type_Id,
+    calendar_Id,
+    token,
+    isDetailView,
+    timeSelected,
+    dateSelected,
+  } = centersState;
+
+  const getCenters = async () => {
+    try {
+      const config = {
+        headers: { Authorization: token },
+      };
+      const response = await axios.get(
+        "https://dev.moons.rocks/appointment/get-centers?country=mx",
+        config
+      );
+      dispatch(
+        setState({
+          mxCenters: response?.data,
+        })
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    dispatch(
+      setState({
+        token: "Basic ZGV2TW9vbnNBQjEwMjp5VlhzMjRiWUg4N3N5OGh2dFRENA==",
+      })
+    );
+    if (token) {
+      getCenters();
+    }
+  }, [token]);
+
+  const getCenterDetail = async () => {
+    try {
+      const config = {
+        headers: { Authorization: token },
+      };
+      const response = await axios.get(
+        `https://dev.moons.rocks/appointment/get-slots?appointmentTypeId=${appointment_Type_Id}&calendarId=${calendar_Id}`,
+        config
+      );
+      dispatch(
+        setState({
+          centerSelected: response?.data,
+          isDetailView: true,
+        })
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    if (appointment_Type_Id && calendar_Id) {
+      getCenterDetail();
+    }
+  }, [appointment_Type_Id, calendar_Id]);
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.js</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
+    <CenterContext.Provider value={[centersState, dispatch]}>
+      {!isDetailView && !timeSelected && !dateSelected && <CenterList />}
+      {isDetailView && <CenterDetail />}
+      {!isDetailView && timeSelected && dateSelected && <AppointmentDetail />}
+    </CenterContext.Provider>
+  );
 }
