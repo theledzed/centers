@@ -28,8 +28,12 @@ export default function AppointmentDetail() {
   } = state;
 
   const createAppoiment = async () => {
-    console.log(state);
     try {
+      dispatch(
+        setState({
+          isLoading: true,
+        })
+      );
       const body = {
         datetime: timeSelected,
         appointmentTypeID: appointment_Type_Id,
@@ -56,6 +60,11 @@ export default function AppointmentDetail() {
         body,
         config
       );
+      dispatch(
+        setState({
+          isLoading: false,
+        })
+      );
       if (response.data.appointmentTypeID) {
         await openNotificationWithIcon(
           "success",
@@ -64,6 +73,11 @@ export default function AppointmentDetail() {
         );
       }
     } catch (error) {
+      dispatch(
+        setState({
+          isLoading: false,
+        })
+      );
       openNotificationWithIcon(
         "error",
         `Selecciona otra hora por favor`,
@@ -120,6 +134,8 @@ export default function AppointmentDetail() {
               timeSelected: null,
               dateSelected: null,
               isDetailView: false,
+              appointment_Type_Id: null,
+              calendar_Id: null,
             })
           );
         }}

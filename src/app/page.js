@@ -1,6 +1,7 @@
 "use client";
 import { useReducer, useEffect } from "react";
 import axios from "axios";
+import { Spin } from "antd";
 import CenterContext from "@/store/centersContext";
 import centersReducer from "@/store/centersReducer";
 import initialCentersState from "@/store/initialCentersState";
@@ -22,10 +23,16 @@ export default function Home() {
     isDetailView,
     timeSelected,
     dateSelected,
+    isLoading = false,
   } = centersState;
 
   const getCenters = async () => {
     try {
+      dispatch(
+        setState({
+          isLoading: true,
+        })
+      );
       const config = {
         headers: { Authorization: token },
       };
@@ -36,10 +43,15 @@ export default function Home() {
       dispatch(
         setState({
           mxCenters: response?.data,
+          isLoading: false,
         })
       );
     } catch (error) {
-      console.log(error);
+      dispatch(
+        setState({
+          isLoading: false,
+        })
+      );
     }
   };
   useEffect(() => {
@@ -55,6 +67,11 @@ export default function Home() {
 
   const getCenterDetail = async () => {
     try {
+      dispatch(
+        setState({
+          isLoading: true,
+        })
+      );
       const config = {
         headers: { Authorization: token },
       };
@@ -66,10 +83,15 @@ export default function Home() {
         setState({
           centerSelected: response?.data,
           isDetailView: true,
+          isLoading: false,
         })
       );
     } catch (error) {
-      console.log(error);
+      dispatch(
+        setState({
+          isLoading: false,
+        })
+      );
     }
   };
 
@@ -81,6 +103,7 @@ export default function Home() {
 
   return (
     <CenterContext.Provider value={[centersState, dispatch]}>
+      <Spin spinning={isLoading} fullscreen />
       {!isDetailView && !timeSelected && !dateSelected && <CenterList />}
       {isDetailView && <CenterDetail />}
       {!isDetailView && timeSelected && dateSelected && <AppointmentDetail />}
